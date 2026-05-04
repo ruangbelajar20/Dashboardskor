@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Papan Skor Interaktif</title>
+    <title>Papan Skor Interaktif Kelompok</title>
     <style>
         * {
             box-sizing: border-box;
@@ -19,8 +19,14 @@
         }
         h1 {
             color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            color: #7f8c8d;
             margin-bottom: 30px;
             text-align: center;
+            font-size: 0.95rem;
         }
         .scoreboard-container {
             display: flex;
@@ -33,10 +39,9 @@
             background: #fff;
             border-radius: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            width: 250px;
+            width: 280px;
             padding: 20px;
             text-align: center;
-            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -46,55 +51,65 @@
             font-size: 1.5rem;
             color: #2c3e50;
         }
-        .group-card p {
-            margin: 5px 0 15px;
-            font-size: 0.85rem;
-            color: #7f8c8d;
+        .score-box {
+            background-color: #ecf0f1;
+            width: 100%;
+            border-radius: 8px;
+            padding: 15px 0;
+            margin: 15px 0;
         }
         .score-display {
-            font-size: 4rem;
+            font-size: 3.5rem;
             font-weight: bold;
-            color: #34495e;
-            margin-bottom: 15px;
-            transition: color 0.3s;
+            color: #2c3e50;
+            line-height: 1;
         }
-        .input-group {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-        }
-        .input-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 1rem;
-            text-align: center;
-        }
-        .input-group button {
-            padding: 10px 15px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
+        .score-label {
+            font-size: 0.85rem;
+            color: #7f8c8d;
             font-weight: bold;
-            transition: background 0.3s;
+            margin-top: 5px;
         }
-        .input-group button:hover {
-            background-color: #2980b9;
+        .avg-display {
+            font-size: 0.9rem;
+            color: #e67e22;
+            font-weight: bold;
+            margin-top: 8px;
         }
         
+        /* Grid Input Anggota */
+        .members-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .members-grid input {
+            padding: 8px;
+            border: 1px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+        .members-grid input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        /* Anggota ke-7 membentang di bawah jika ganjil */
+        .member-7 {
+            grid-column: span 2;
+        }
+
         /* Animasi Label Bertingkat */
         .feedback-badge {
-            margin-top: 15px;
             padding: 8px 15px;
             border-radius: 20px;
             font-weight: bold;
             color: white;
             opacity: 0;
             transform: scale(0.5);
-            transition: opacity 0.3s ease;
             height: 35px;
             display: flex;
             align-items: center;
@@ -110,7 +125,7 @@
         }
 
         .show-anim {
-            animation: popUp 0.5s ease forwards;
+            animation: popUp 0.4s ease forwards;
         }
 
         /* Warna berdasarkan tingkat nilai */
@@ -124,81 +139,124 @@
 <body>
 
     <h1>Papan Skor Penilaian</h1>
+    <p class="subtitle">Skor akan terhitung otomatis saat nilai anggota dimasukkan.<br>Predikat (Animasi) didasarkan pada <b>Rata-rata</b> kelompok.</p>
 
     <div class="scoreboard-container" id="scoreboard">
         <!-- Kartu Kelompok akan di-generate oleh JavaScript -->
     </div>
 
     <script>
-        // Data Kelompok (6 Kelompok)
         const totalGroups = 6;
+        const membersPerGroup = 7;
         const container = document.getElementById('scoreboard');
 
         // Render 6 kolom/kartu kelompok
         for (let i = 1; i <= totalGroups; i++) {
             const card = document.createElement('div');
             card.className = 'group-card';
+            
+            // Buat form input untuk anggota
+            let inputsHtml = `<div class="members-grid">`;
+            for(let j = 1; j <= membersPerGroup; j++) {
+                // Member ke-7 dibuat agar spanning 2 kolom supaya rapi
+                let extraClass = (j === 7) ? 'member-7' : '';
+                inputsHtml += `
+                    <input type="number" 
+                           class="${extraClass}" 
+                           id="g${i}-m${j}" 
+                           placeholder="Anggota ${j}" 
+                           min="0" max="100"
+                           oninput="hitungOtomatis(${i})">
+                `;
+            }
+            inputsHtml += `</div>`;
+
             card.innerHTML = `
                 <h2>Kelompok ${i}</h2>
-                <p>Anggota: 6 - 7 Orang</p>
-                <div class="score-display" id="score-${i}">0</div>
-                <div class="input-group">
-                    <input type="number" id="input-${i}" placeholder="Nilai (0-100)">
-                    <button onclick="berikanNilai(${i})">Beri Nilai</button>
+                <div class="score-box">
+                    <div class="score-display" id="total-${i}">0</div>
+                    <div class="score-label">TOTAL SKOR</div>
+                    <div class="avg-display" id="avg-${i}">Rata-rata: 0</div>
                 </div>
+                ${inputsHtml}
                 <div class="feedback-badge" id="feedback-${i}">-</div>
             `;
             container.appendChild(card);
         }
 
-        // Fungsi untuk memproses dan menampilkan animasi
-        function berikanNilai(id) {
-            const input = document.getElementById(`input-${id}`);
-            const scoreDisplay = document.getElementById(`score-${id}`);
-            const feedbackBadge = document.getElementById(`feedback-${id}`);
-            
-            let nilai = parseInt(input.value);
+        // Fungsi Kalkulasi Otomatis dan Animasi
+        function hitungOtomatis(groupId) {
+            let total = 0;
+            let countValid = 0;
 
-            // Validasi input
-            if (isNaN(nilai)) {
-                alert("Harap masukkan angka yang valid!");
+            // Loop untuk mengambil nilai dari ke-7 anggota
+            for(let j = 1; j <= membersPerGroup; j++) {
+                const inputVal = document.getElementById(`g${groupId}-m${j}`).value;
+                if (inputVal !== '' && !isNaN(inputVal)) {
+                    total += parseFloat(inputVal);
+                    countValid++;
+                }
+            }
+
+            const totalDisplay = document.getElementById(`total-${groupId}`);
+            const avgDisplay = document.getElementById(`avg-${groupId}`);
+            const feedbackBadge = document.getElementById(`feedback-${groupId}`);
+
+            // Menghitung Rata-rata
+            let rataRata = 0;
+            if (countValid > 0) {
+                rataRata = Math.round(total / countValid);
+            }
+
+            // Update Angka di layar
+            totalDisplay.innerText = total;
+            avgDisplay.innerText = `Rata-rata: ${rataRata}`;
+
+            // Jika form dikosongkan, hilangkan badge
+            if (countValid === 0) {
+                feedbackBadge.style.opacity = 0;
+                feedbackBadge.removeAttribute('data-cat');
                 return;
             }
 
-            // Update teks skor di layar
-            scoreDisplay.innerText = nilai;
-
-            // Reset animasi
-            feedbackBadge.classList.remove('show-anim', 'kurang', 'cukup', 'baik', 'sangat-baik');
-            
-            // Force reflow agar animasi bisa diulang walau nilainya sama
-            void feedbackBadge.offsetWidth;
-
-            // Logika Bertingkat
+            // Logika Bertingkat (berdasarkan Rata-rata)
             let kategori = '';
             let kelasWarna = '';
 
-            if (nilai < 60) {
+            if (rataRata < 60) {
                 kategori = 'Kurang';
                 kelasWarna = 'kurang';
-            } else if (nilai >= 60 && nilai < 80) {
+            } else if (rataRata >= 60 && rataRata < 80) {
                 kategori = 'Cukup';
                 kelasWarna = 'cukup';
-            } else if (nilai >= 80 && nilai <= 90) {
+            } else if (rataRata >= 80 && rataRata <= 90) {
                 kategori = 'Baik';
                 kelasWarna = 'baik';
-            } else if (nilai > 90) {
+            } else if (rataRata > 90) {
                 kategori = 'Sangat Baik';
                 kelasWarna = 'sangat-baik';
             }
 
-            // Terapkan teks dan kelas warna baru, lalu jalankan animasi
-            feedbackBadge.innerText = kategori;
-            feedbackBadge.classList.add(kelasWarna);
-            feedbackBadge.classList.add('show-anim');
-            
-            // Kosongkan input setelah nilai dimasukkan (opsional)
-            input.value = '';
+            // Cek apakah kategorinya berubah untuk menghindari animasi memantul berulang 
+            // setiap kali kita mengetik satu angka (hanya memantul saat predikat berubah)
+            const currentCat = feedbackBadge.getAttribute('data-cat');
+
+            if (currentCat !== kategori) {
+                // Reset animasi & kelas
+                feedbackBadge.className = 'feedback-badge ' + kelasWarna;
+                feedbackBadge.innerText = kategori;
+                feedbackBadge.setAttribute('data-cat', kategori);
+                
+                // Force reflow
+                void feedbackBadge.offsetWidth; 
+                
+                // Tambahkan kelas animasi dan tampilkan
+                feedbackBadge.classList.add('show-anim');
+                feedbackBadge.style.opacity = 1;
+            } else {
+                // Jika masih dalam kategori yang sama, pastikan tetap terlihat
+                feedbackBadge.style.opacity = 1;
+            }
         }
     </script>
 
