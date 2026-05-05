@@ -243,7 +243,7 @@
 </div>
 
 <script>
-    // ===== GANTI URL INI DENGAN URL WEB APP GOOGLE SCRIPT ANDA =====
+    // ===== URL WEB APP GOOGLE SCRIPT ANDA =====
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxO4syP40MFA51plRQ63jWKTwZZM0MCSrHcfm061nnNvVHzMW-3nBZCb6WgbYg5Zj9T/exec"; 
 
     let globalConfig = {};
@@ -339,14 +339,13 @@
         }
     }
 
-   function hitungDanSimpan(groupId) {
+    function hitungDanSimpan(groupId) {
         let totalNilaiKelompok = 0;
         let totalInput = globalConfig.jmlAnggota * globalConfig.jmlAspek;
         let nilaiMasuk = 0;
         
-        let detailAnggotaArray = []; // Array untuk menyimpan nilai tiap anggota
+        let detailAnggotaArray = [];
 
-        // Looping untuk menghitung nilai MASING-MASING anggota
         for (let j = 1; j <= globalConfig.jmlAnggota; j++) {
             let totalNilaiMemberIni = 0;
             let inputsMember = document.querySelectorAll(`.g${groupId}-m${j}`);
@@ -360,7 +359,7 @@
                 }
             });
 
-            // Hitung rata-rata nilai untuk Siswa ke-j (Total nilai dia / jumlah aspek)
+            // Math.round digunakan agar nilai membulat jadi bilangan genap tanpa nol koma
             let rataRataMemberIni = Math.round(totalNilaiMemberIni / globalConfig.jmlAspek);
             detailAnggotaArray.push(`Siswa ${j}: ${rataRataMemberIni}`);
         }
@@ -375,13 +374,12 @@
             return;
         }
 
+        // Pembulatan ke bilangan bulat penuh untuk nilai akhir dan rata-rata
         let nilaiAkhir = Math.round(totalNilaiKelompok / totalInput);
-        let rataRataAnggota = (totalNilaiKelompok / globalConfig.jmlAnggota).toFixed(2);
+        let rataRataAnggota = Math.round(totalNilaiKelompok / globalConfig.jmlAnggota);
         
-        // Gabungkan array menjadi satu kalimat rapi (Siswa 1: 85 | Siswa 2: 90 | ...)
         let stringDetailAnggota = detailAnggotaArray.join(" | ");
 
-        // Bawa data stringDetailAnggota ke fungsi berikutnya
         tampilkanAnimasiSejarah(groupId, nilaiAkhir, rataRataAnggota, stringDetailAnggota);
     }
 
@@ -391,7 +389,7 @@
 
         if (nilaiAkhir < 60) {
             status = "Tidak Tercapai";
-            mainkanSuara('sound-fail'); // Akan bunyi Womp Womp
+            mainkanSuara('sound-fail'); 
             tema = {
                 title: 'Masa Sulit Romusha!',
                 text: `Skor: ${nilaiAkhir}. Aduh, kelompok kalian butuh keajaiban!`,
@@ -401,7 +399,7 @@
             };
         } else if (nilaiAkhir >= 60 && nilaiAkhir <= 80) {
             status = "Cukup Tercapai";
-            mainkanSuara('sound-cukup'); // Akan bunyi Jangkrik
+            mainkanSuara('sound-cukup'); 
             tema = {
                 title: 'Pelatihan Pasukan PETA!',
                 text: `Skor: ${nilaiAkhir}. Cukup baik, tapi kurang greget. Tingkatkan lagi!`,
@@ -411,7 +409,7 @@
             };
         } else if (nilaiAkhir >= 81 && nilaiAkhir <= 90) {
             status = "Tercapai";
-            mainkanSuara('sound-baik'); // Akan bunyi Anime Wow
+            mainkanSuara('sound-baik'); 
             tema = {
                 title: 'Sidang BPUPKI Sukses!',
                 text: `Skor: ${nilaiAkhir}. Mantap! Ide kalian dieksekusi dengan sangat baik!`,
@@ -421,7 +419,7 @@
             };
         } else if (nilaiAkhir >= 91 && nilaiAkhir <= 100) {
             status = "Sangat Tercapai";
-            mainkanSuara('sound-sempurna'); // Akan bunyi Airhorn Heboh
+            mainkanSuara('sound-sempurna'); 
             
             var duration = 3 * 1000;
             var end = Date.now() + duration;
@@ -453,14 +451,14 @@
             backdrop: `rgba(0,0,0,0.7)`
         }).then((result) => {
             if (result.isConfirmed) {
-                // Jangan lupa lempar stringDetailAnggota ke fungsi kirim
                 kirimKeSpreadsheet(groupId, nilaiAkhir, rataRataAnggota, status, stringDetailAnggota);
             }
         });
     }
 
+    // Hanya tersisa SATU fungsi kirimKeSpreadsheet yang benar di sini
     function kirimKeSpreadsheet(groupId, nilaiAkhir, rataRataAnggota, status, stringDetailAnggota) {
-        if(SCRIPT_URL === "URL_GOOGLE_APPS_SCRIPT_ANDA_DISINI") {
+        if(SCRIPT_URL === "") {
             Swal.fire('Perhatian!', 'URL Google Apps Script belum dimasukkan.', 'info');
             return;
         }
@@ -472,7 +470,6 @@
             didOpen: () => { Swal.showLoading() }
         });
 
-        // Tambahkan detailAnggota ke dalam data yang dikirim (payload JSON)
         const dataKirim = {
             kelas: globalConfig.kelas,
             jurusan: globalConfig.jurusan,
@@ -480,7 +477,7 @@
             rataRataAnggota: rataRataAnggota,
             nilaiAkhir: nilaiAkhir,
             predikat: status,
-            detailAnggota: stringDetailAnggota // <-- Data baru dikirim ke Apps Script
+            detailAnggota: stringDetailAnggota
         };
 
         fetch(SCRIPT_URL, {
@@ -493,52 +490,6 @@
                 Swal.fire({
                     title: 'Tersimpan!', 
                     text: 'Sejarah dan nilai lengkap anggota telah diabadikan.', 
-                    icon: 'success',
-                    showClass: { popup: 'animate__animated animate__zoomIn' }
-                });
-                const btn = document.querySelector(`#group-${groupId} .btn-submit-nilai`);
-                btn.disabled = true;
-                btn.innerHTML = "✅ Data Tersimpan";
-                btn.style.background = "linear-gradient(45deg, #7f8c8d, #95a5a6)";
-            }
-        })
-        .catch(error => {
-            Swal.fire('Gagal Menyimpan', 'Periksa koneksi internet Anda.', 'error');
-        });
-    }
-
-    function kirimKeSpreadsheet(groupId, nilaiAkhir, rataRataAnggota, status) {
-        if(SCRIPT_URL === "https://script.google.com/macros/s/AKfycbx9jhY_5n0hM3Q7LRJcKtnNQklmJR1lKMzSEYpCZzdm0XnVUnyLRv6vkicaaUVXOsyA/exec") {
-            Swal.fire('Perhatian!', 'URL Google Apps Script belum dimasukkan di dalam kode.', 'info');
-            return;
-        }
-
-        Swal.fire({
-            title: 'Menyandikan Sejarah...',
-            html: 'Menyimpan data ke markas pusat (Spreadsheet)',
-            allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading() }
-        });
-
-        const dataKirim = {
-            kelas: globalConfig.kelas,
-            jurusan: globalConfig.jurusan,
-            kelompok: `Kelompok ${groupId}`,
-            rataRataAnggota: rataRataAnggota,
-            nilaiAkhir: nilaiAkhir,
-            predikat: status
-        };
-
-        fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(dataKirim)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if(data.status === 'success') {
-                Swal.fire({
-                    title: 'Tersimpan!', 
-                    text: 'Sejarah kelompok telah diabadikan.', 
                     icon: 'success',
                     showClass: { popup: 'animate__animated animate__zoomIn' }
                 });
