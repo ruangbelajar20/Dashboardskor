@@ -339,20 +339,31 @@
         }
     }
 
-    function hitungDanSimpan(groupId) {
+   function hitungDanSimpan(groupId) {
         let totalNilaiKelompok = 0;
         let totalInput = globalConfig.jmlAnggota * globalConfig.jmlAspek;
         let nilaiMasuk = 0;
-
-        let inputs = document.querySelectorAll(`.g${groupId}-m${[...Array(globalConfig.jmlAnggota).keys()].map(x => x+1).join(', .g'+groupId+'-m')}`);
         
-        inputs.forEach(input => {
-            let val = parseFloat(input.value);
-            if (!isNaN(val)) {
-                totalNilaiKelompok += val;
-                nilaiMasuk++;
-            }
-        });
+        let detailAnggotaArray = []; // Array untuk menyimpan nilai tiap anggota
+
+        // Looping untuk menghitung nilai MASING-MASING anggota
+        for (let j = 1; j <= globalConfig.jmlAnggota; j++) {
+            let totalNilaiMemberIni = 0;
+            let inputsMember = document.querySelectorAll(`.g${groupId}-m${j}`);
+            
+            inputsMember.forEach(input => {
+                let val = parseFloat(input.value);
+                if (!isNaN(val)) {
+                    totalNilaiMemberIni += val;
+                    totalNilaiKelompok += val;
+                    nilaiMasuk++;
+                }
+            });
+
+            // Hitung rata-rata nilai untuk Siswa ke-j (Total nilai dia / jumlah aspek)
+            let rataRataMemberIni = Math.round(totalNilaiMemberIni / globalConfig.jmlAspek);
+            detailAnggotaArray.push(`Siswa ${j}: ${rataRataMemberIni}`);
+        }
 
         if (nilaiMasuk < totalInput) {
             Swal.fire({
@@ -366,49 +377,52 @@
 
         let nilaiAkhir = Math.round(totalNilaiKelompok / totalInput);
         let rataRataAnggota = (totalNilaiKelompok / globalConfig.jmlAnggota).toFixed(2);
+        
+        // Gabungkan array menjadi satu kalimat rapi (Siswa 1: 85 | Siswa 2: 90 | ...)
+        let stringDetailAnggota = detailAnggotaArray.join(" | ");
 
-        tampilkanAnimasiSejarah(groupId, nilaiAkhir, rataRataAnggota);
+        // Bawa data stringDetailAnggota ke fungsi berikutnya
+        tampilkanAnimasiSejarah(groupId, nilaiAkhir, rataRataAnggota, stringDetailAnggota);
     }
 
-    function tampilkanAnimasiSejarah(groupId, nilaiAkhir, rataRataAnggota) {
+    function tampilkanAnimasiSejarah(groupId, nilaiAkhir, rataRataAnggota, stringDetailAnggota) {
         let status = "";
         let tema = {};
 
         if (nilaiAkhir < 60) {
             status = "Tidak Tercapai";
-            mainkanSuara('sound-fail');
+            mainkanSuara('sound-fail'); // Akan bunyi Womp Womp
             tema = {
                 title: 'Masa Sulit Romusha!',
-                text: `Skor Akhir: ${nilaiAkhir}. Kelompok kalian masih di fase kerja paksa. Butuh perjuangan dan strategi ekstra untuk bangkit!`,
+                text: `Skor: ${nilaiAkhir}. Aduh, kelompok kalian butuh keajaiban!`,
                 icon: 'error',
                 animasi: 'animate__headShake',
                 bg: '#fadbd8'
             };
         } else if (nilaiAkhir >= 60 && nilaiAkhir <= 80) {
             status = "Cukup Tercapai";
-            mainkanSuara('sound-cukup');
+            mainkanSuara('sound-cukup'); // Akan bunyi Jangkrik
             tema = {
                 title: 'Pelatihan Pasukan PETA!',
-                text: `Skor Akhir: ${nilaiAkhir}. Layaknya Pembela Tanah Air, kalian sudah berlatih keras. Namun taktik masih perlu ditajamkan.`,
+                text: `Skor: ${nilaiAkhir}. Cukup baik, tapi kurang greget. Tingkatkan lagi!`,
                 icon: 'warning',
                 animasi: 'animate__pulse',
                 bg: '#fdebd0'
             };
         } else if (nilaiAkhir >= 81 && nilaiAkhir <= 90) {
             status = "Tercapai";
-            mainkanSuara('sound-baik');
+            mainkanSuara('sound-baik'); // Akan bunyi Anime Wow
             tema = {
                 title: 'Sidang BPUPKI Sukses!',
-                text: `Skor Akhir: ${nilaiAkhir}. Ide brilian tersusun rapi bagaikan panitia kemerdekaan. Kinerja yang sangat membanggakan!`,
+                text: `Skor: ${nilaiAkhir}. Mantap! Ide kalian dieksekusi dengan sangat baik!`,
                 icon: 'info',
                 animasi: 'animate__tada',
                 bg: '#d6eaf8'
             };
         } else if (nilaiAkhir >= 91 && nilaiAkhir <= 100) {
             status = "Sangat Tercapai";
-            mainkanSuara('sound-sempurna');
+            mainkanSuara('sound-sempurna'); // Akan bunyi Airhorn Heboh
             
-            // Tembakkan Confetti
             var duration = 3 * 1000;
             var end = Date.now() + duration;
             (function frame() {
@@ -419,7 +433,7 @@
 
             tema = {
                 title: 'MERDEKA!! 🇮🇩',
-                text: `Skor Akhir: ${nilaiAkhir}. Kemenangan gemilang! Proklamasi berkumandang berkat kerjasama yang sempurna!`,
+                text: `Skor: ${nilaiAkhir}. Sempurna! Kerja sama kelompok yang luar biasa!`,
                 icon: 'success',
                 animasi: 'animate__bounceIn',
                 bg: '#d5f5e3'
@@ -439,13 +453,62 @@
             backdrop: `rgba(0,0,0,0.7)`
         }).then((result) => {
             if (result.isConfirmed) {
-                kirimKeSpreadsheet(groupId, nilaiAkhir, rataRataAnggota, status);
+                // Jangan lupa lempar stringDetailAnggota ke fungsi kirim
+                kirimKeSpreadsheet(groupId, nilaiAkhir, rataRataAnggota, status, stringDetailAnggota);
             }
         });
     }
 
-    function kirimKeSpreadsheet(groupId, nilaiAkhir, rataRataAnggota, status) {
+    function kirimKeSpreadsheet(groupId, nilaiAkhir, rataRataAnggota, status, stringDetailAnggota) {
         if(SCRIPT_URL === "URL_GOOGLE_APPS_SCRIPT_ANDA_DISINI") {
+            Swal.fire('Perhatian!', 'URL Google Apps Script belum dimasukkan.', 'info');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Menyandikan Sejarah...',
+            html: 'Menyimpan detail nilai tiap anggota ke markas pusat...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading() }
+        });
+
+        // Tambahkan detailAnggota ke dalam data yang dikirim (payload JSON)
+        const dataKirim = {
+            kelas: globalConfig.kelas,
+            jurusan: globalConfig.jurusan,
+            kelompok: `Kelompok ${groupId}`,
+            rataRataAnggota: rataRataAnggota,
+            nilaiAkhir: nilaiAkhir,
+            predikat: status,
+            detailAnggota: stringDetailAnggota // <-- Data baru dikirim ke Apps Script
+        };
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(dataKirim)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === 'success') {
+                Swal.fire({
+                    title: 'Tersimpan!', 
+                    text: 'Sejarah dan nilai lengkap anggota telah diabadikan.', 
+                    icon: 'success',
+                    showClass: { popup: 'animate__animated animate__zoomIn' }
+                });
+                const btn = document.querySelector(`#group-${groupId} .btn-submit-nilai`);
+                btn.disabled = true;
+                btn.innerHTML = "✅ Data Tersimpan";
+                btn.style.background = "linear-gradient(45deg, #7f8c8d, #95a5a6)";
+            }
+        })
+        .catch(error => {
+            Swal.fire('Gagal Menyimpan', 'Periksa koneksi internet Anda.', 'error');
+        });
+    }
+
+    function kirimKeSpreadsheet(groupId, nilaiAkhir, rataRataAnggota, status) {
+        if(SCRIPT_URL === "https://script.google.com/macros/s/AKfycbx9jhY_5n0hM3Q7LRJcKtnNQklmJR1lKMzSEYpCZzdm0XnVUnyLRv6vkicaaUVXOsyA/exec") {
             Swal.fire('Perhatian!', 'URL Google Apps Script belum dimasukkan di dalam kode.', 'info');
             return;
         }
