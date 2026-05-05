@@ -3,262 +3,406 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Papan Skor Interaktif Kelompok</title>
+    <title>Aplikasi Penilaian Kelompok - Sejarah</title>
+    <!-- Font Google untuk desain modern -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 untuk Animasi Pop-up -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
-        * {
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        :root {
+            --primary: #2c3e50;
+            --secondary: #e74c3c;
+            --accent: #3498db;
+            --bg: #ecf0f1;
+            --text: #333;
         }
+
         body {
-            background-color: #f4f7f6;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             margin: 0;
             padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
         h1 {
-            color: #333;
-            margin-bottom: 10px;
             text-align: center;
-        }
-        .subtitle {
-            color: #7f8c8d;
+            color: var(--primary);
             margin-bottom: 30px;
-            text-align: center;
-            font-size: 0.95rem;
         }
-        .scoreboard-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-            max-width: 1200px;
+
+        .form-group {
+            margin-bottom: 20px;
         }
-        .group-card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            width: 280px;
-            padding: 20px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
         }
-        .group-card h2 {
-            margin: 0;
-            font-size: 1.5rem;
-            color: #2c3e50;
-        }
-        .score-box {
-            background-color: #ecf0f1;
+
+        select, input {
             width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
             border-radius: 8px;
-            padding: 15px 0;
-            margin: 15px 0;
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            transition: 0.3s;
+            box-sizing: border-box;
         }
-        .score-display {
-            font-size: 3.5rem;
-            font-weight: bold;
-            color: #2c3e50;
-            line-height: 1;
-        }
-        .score-label {
-            font-size: 0.85rem;
-            color: #7f8c8d;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-        .avg-display {
-            font-size: 0.9rem;
-            color: #e67e22;
-            font-weight: bold;
-            margin-top: 8px;
-        }
-        
-        /* Grid Input Anggota */
-        .members-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-        .members-grid input {
-            padding: 8px;
-            border: 1px solid #bdc3c7;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            text-align: center;
-            transition: border-color 0.3s;
-        }
-        .members-grid input:focus {
+
+        select:focus, input:focus {
+            border-color: var(--accent);
             outline: none;
-            border-color: #3498db;
-        }
-        /* Anggota ke-7 membentang di bawah jika ganjil */
-        .member-7 {
-            grid-column: span 2;
         }
 
-        /* Animasi Label Bertingkat */
-        .feedback-badge {
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: bold;
+        button {
+            background-color: var(--primary);
             color: white;
-            opacity: 0;
-            transform: scale(0.5);
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
             width: 100%;
+            transition: 0.3s;
+            margin-top: 10px;
         }
 
-        /* Keyframe untuk efek Popup/Bounce */
-        @keyframes popUp {
-            0% { transform: scale(0.5); opacity: 0; }
-            50% { transform: scale(1.1); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
+        button:hover {
+            background-color: var(--accent);
         }
 
-        .show-anim {
-            animation: popUp 0.4s ease forwards;
+        /* Styling untuk Halaman Penilaian */
+        #grading-screen {
+            display: none;
         }
 
-        /* Warna berdasarkan tingkat nilai */
-        .kurang { background-color: #e74c3c; }       /* Merah */
-        .cukup { background-color: #f39c12; }        /* Oranye */
-        .baik { background-color: #3498db; }         /* Biru */
-        .sangat-baik { background-color: #2ecc71; }  /* Hijau */
-        
+        .group-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            background: #bdc3c7;
+            width: auto;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            background: var(--secondary);
+        }
+
+        .group-content {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .group-content.active {
+            display: block;
+        }
+
+        .member-card {
+            background: #f9f9f9;
+            border-left: 5px solid var(--accent);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .aspect-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .btn-submit-nilai {
+            background-color: #27ae60;
+        }
+
+        .btn-submit-nilai:hover {
+            background-color: #2ecc71;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
 
-    <h1>Papan Skor Penilaian</h1>
-    <p class="subtitle">Skor akan terhitung otomatis saat nilai anggota dimasukkan.<br>Predikat (Animasi) didasarkan pada <b>Rata-rata</b> kelompok.</p>
-
-    <div class="scoreboard-container" id="scoreboard">
-        <!-- Kartu Kelompok akan di-generate oleh JavaScript -->
+<div class="container" id="setup-screen">
+    <h1>Setup Penilaian Kelas</h1>
+    
+    <div class="form-group">
+        <label>Pilih Kelas</label>
+        <select id="kelas">
+            <option value="X">Kelas X</option>
+            <option value="XI">Kelas XI</option>
+        </select>
     </div>
 
-    <script>
-        const totalGroups = 6;
-        const membersPerGroup = 7;
-        const container = document.getElementById('scoreboard');
+    <div class="form-group">
+        <label>Pilih Jurusan</label>
+        <select id="jurusan">
+            <option value="TJKT">TJKT</option>
+            <option value="TBSM 1">TBSM 1</option>
+            <option value="TBSM 2">TBSM 2</option>
+            <option value="TKR">TKR</option>
+            <option value="FARMASI">FARMASI</option>
+            <option value="KEPERAWATAN 1">KEPERAWATAN 1</option>
+            <option value="KEPERAWATAN 2">KEPERAWATAN 2</option>
+        </select>
+    </div>
 
-        // Render 6 kolom/kartu kelompok
-        for (let i = 1; i <= totalGroups; i++) {
-            const card = document.createElement('div');
-            card.className = 'group-card';
+    <div class="form-group">
+        <label>Jumlah Kelompok</label>
+        <input type="number" id="jmlKelompok" min="1" value="4">
+    </div>
+
+    <div class="form-group">
+        <label>Jumlah Anggota Per Kelompok</label>
+        <input type="number" id="jmlAnggota" min="1" value="5">
+    </div>
+
+    <div class="form-group">
+        <label>Jumlah Aspek Penilaian</label>
+        <input type="number" id="jmlAspek" min="1" value="3" placeholder="Misal: 3 (Sikap, Pengetahuan, Keterampilan)">
+    </div>
+
+    <button onclick="generateGradingUI()">Mulai Penilaian di Proyektor</button>
+</div>
+
+<div class="container" id="grading-screen">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 id="judul-grading">Penilaian Sedang Berlangsung</h2>
+        <button onclick="location.reload()" style="width: auto; padding: 10px 15px; background: #95a5a6;">Kembali</button>
+    </div>
+    
+    <div class="group-tabs" id="tabs-container"></div>
+    <div id="groups-container"></div>
+</div>
+
+<script>
+    // ===== GANTI URL INI DENGAN URL WEB APP GOOGLE SCRIPT ANDA =====
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxgfQHqPWBJgG_3ABrOIAr8QTnzSKtTkBsJTppgil96K7YoC6ayitUCmKlConpORjb6/exec"; 
+
+    let globalConfig = {};
+
+    function generateGradingUI() {
+        // Ambil nilai dari form setup
+        globalConfig = {
+            kelas: document.getElementById('kelas').value,
+            jurusan: document.getElementById('jurusan').value,
+            jmlKelompok: parseInt(document.getElementById('jmlKelompok').value),
+            jmlAnggota: parseInt(document.getElementById('jmlAnggota').value),
+            jmlAspek: parseInt(document.getElementById('jmlAspek').value)
+        };
+
+        document.getElementById('setup-screen').style.display = 'none';
+        document.getElementById('grading-screen').style.display = 'block';
+        document.getElementById('judul-grading').innerText = `Penilaian Kelas ${globalConfig.kelas} ${globalConfig.jurusan}`;
+
+        const tabsContainer = document.getElementById('tabs-container');
+        const groupsContainer = document.getElementById('groups-container');
+        
+        tabsContainer.innerHTML = '';
+        groupsContainer.innerHTML = '';
+
+        for (let i = 1; i <= globalConfig.jmlKelompok; i++) {
+            // Buat Tab Navigasi
+            const tabBtn = document.createElement('button');
+            tabBtn.className = `tab-btn ${i === 1 ? 'active' : ''}`;
+            tabBtn.innerText = `Kelompok ${i}`;
+            tabBtn.onclick = () => switchTab(i);
+            tabsContainer.appendChild(tabBtn);
+
+            // Buat Konten Kelompok
+            const groupDiv = document.createElement('div');
+            groupDiv.id = `group-${i}`;
+            groupDiv.className = `group-content ${i === 1 ? 'active' : ''}`;
             
-            // Buat form input untuk anggota
-            let inputsHtml = `<div class="members-grid">`;
-            for(let j = 1; j <= membersPerGroup; j++) {
-                // Member ke-7 dibuat agar spanning 2 kolom supaya rapi
-                let extraClass = (j === 7) ? 'member-7' : '';
-                inputsHtml += `
-                    <input type="number" 
-                           class="${extraClass}" 
-                           id="g${i}-m${j}" 
-                           placeholder="Anggota ${j}" 
-                           min="0" max="100"
-                           oninput="hitungOtomatis(${i})">
-                `;
-            }
-            inputsHtml += `</div>`;
-
-            card.innerHTML = `
-                <h2>Kelompok ${i}</h2>
-                <div class="score-box">
-                    <div class="score-display" id="total-${i}">0</div>
-                    <div class="score-label">TOTAL SKOR</div>
-                    <div class="avg-display" id="avg-${i}">Rata-rata: 0</div>
-                </div>
-                ${inputsHtml}
-                <div class="feedback-badge" id="feedback-${i}">-</div>
-            `;
-            container.appendChild(card);
-        }
-
-        // Fungsi Kalkulasi Otomatis dan Animasi
-        function hitungOtomatis(groupId) {
-            let total = 0;
-            let countValid = 0;
-
-            // Loop untuk mengambil nilai dari ke-7 anggota
-            for(let j = 1; j <= membersPerGroup; j++) {
-                const inputVal = document.getElementById(`g${groupId}-m${j}`).value;
-                if (inputVal !== '' && !isNaN(inputVal)) {
-                    total += parseFloat(inputVal);
-                    countValid++;
+            let groupHTML = `<h3>Input Nilai - Kelompok ${i}</h3>`;
+            
+            for (let j = 1; j <= globalConfig.jmlAnggota; j++) {
+                groupHTML += `<div class="member-card">
+                                <h4>Anggota ${j}</h4>
+                                <div class="aspect-grid">`;
+                
+                for (let k = 1; k <= globalConfig.jmlAspek; k++) {
+                    groupHTML += `<div>
+                                    <label>Aspek ${k} (0-100)</label>
+                                    <input type="number" class="input-nilai g${i}-m${j}" min="0" max="100" placeholder="Skor">
+                                  </div>`;
                 }
+                groupHTML += `</div></div>`;
             }
-
-            const totalDisplay = document.getElementById(`total-${groupId}`);
-            const avgDisplay = document.getElementById(`avg-${groupId}`);
-            const feedbackBadge = document.getElementById(`feedback-${groupId}`);
-
-            // Menghitung Rata-rata
-            let rataRata = 0;
-            if (countValid > 0) {
-                rataRata = Math.round(total / countValid);
-            }
-
-            // Update Angka di layar
-            totalDisplay.innerText = total;
-            avgDisplay.innerText = `Rata-rata: ${rataRata}`;
-
-            // Jika form dikosongkan, hilangkan badge
-            if (countValid === 0) {
-                feedbackBadge.style.opacity = 0;
-                feedbackBadge.removeAttribute('data-cat');
-                return;
-            }
-
-            // Logika Bertingkat (berdasarkan Rata-rata)
-            let kategori = '';
-            let kelasWarna = '';
-
-            if (rataRata < 60) {
-                kategori = 'Kurang';
-                kelasWarna = 'kurang';
-            } else if (rataRata >= 60 && rataRata < 80) {
-                kategori = 'Cukup';
-                kelasWarna = 'cukup';
-            } else if (rataRata >= 80 && rataRata <= 90) {
-                kategori = 'Baik';
-                kelasWarna = 'baik';
-            } else if (rataRata > 90) {
-                kategori = 'Sangat Baik';
-                kelasWarna = 'sangat-baik';
-            }
-
-            // Cek apakah kategorinya berubah untuk menghindari animasi memantul berulang 
-            // setiap kali kita mengetik satu angka (hanya memantul saat predikat berubah)
-            const currentCat = feedbackBadge.getAttribute('data-cat');
-
-            if (currentCat !== kategori) {
-                // Reset animasi & kelas
-                feedbackBadge.className = 'feedback-badge ' + kelasWarna;
-                feedbackBadge.innerText = kategori;
-                feedbackBadge.setAttribute('data-cat', kategori);
-                
-                // Force reflow
-                void feedbackBadge.offsetWidth; 
-                
-                // Tambahkan kelas animasi dan tampilkan
-                feedbackBadge.classList.add('show-anim');
-                feedbackBadge.style.opacity = 1;
-            } else {
-                // Jika masih dalam kategori yang sama, pastikan tetap terlihat
-                feedbackBadge.style.opacity = 1;
-            }
+            
+            groupHTML += `<button class="btn-submit-nilai" onclick="hitungDanSimpan(${i})">Hitung & Simpan Kelompok ${i}</button>`;
+            groupDiv.innerHTML = groupHTML;
+            groupsContainer.appendChild(groupDiv);
         }
-    </script>
+    }
+
+    function switchTab(groupId) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.group-content').forEach(content => content.classList.remove('active'));
+        
+        document.querySelectorAll('.tab-btn')[groupId - 1].classList.add('active');
+        document.getElementById(`group-${groupId}`).classList.add('active');
+    }
+
+    function hitungDanSimpan(groupId) {
+        let totalNilaiKelompok = 0;
+        let totalInput = globalConfig.jmlAnggota * globalConfig.jmlAspek;
+        let nilaiMasuk = 0;
+
+        // Kumpulkan nilai
+        for (let j = 1; j <= globalConfig.jmlAnggota; j++) {
+            let inputs = document.querySelectorAll(`.g${groupId}-m${j}`);
+            inputs.forEach(input => {
+                let val = parseFloat(input.value);
+                if (!isNaN(val)) {
+                    totalNilaiKelompok += val;
+                    nilaiMasuk++;
+                }
+            });
+        }
+
+        if (nilaiMasuk < totalInput) {
+            Swal.fire('Oops!', 'Mohon isi semua nilai aspek untuk semua anggota sebelum menghitung.', 'warning');
+            return;
+        }
+
+        // Rumus: Total skor dari semua anggota dibagi jumlah input (skala 100)
+        let nilaiAkhir = Math.round(totalNilaiKelompok / totalInput);
+        let rataRataAnggota = totalNilaiKelompok / globalConfig.jmlAnggota; // Total poin per anak
+
+        tampilkanAnimasiSejarah(groupId, nilaiAkhir, rataRataAnggota);
+    }
+
+    function tampilkanAnimasiSejarah(groupId, nilaiAkhir, rataRataAnggota) {
+        let status = "";
+        let temaAnimasi = {};
+
+        // Logika Tema Sejarah Pendudukan Jepang
+        if (nilaiAkhir < 60) {
+            status = "Tidak Tercapai";
+            temaAnimasi = {
+                title: 'Masa Sulit Romusha!',
+                text: `Skor: ${nilaiAkhir}. Layaknya penderitaan masa Romusha, kelompok kalian masih butuh perjuangan yang sangat ekstra. Bangkit dan perbaiki strategi kerja sama!`,
+                icon: 'error',
+                color: '#e74c3c',
+                background: '#fadbd8'
+            };
+        } else if (nilaiAkhir >= 60 && nilaiAkhir <= 80) {
+            status = "Cukup Tercapai";
+            temaAnimasi = {
+                title: 'Pelatihan PETA!',
+                text: `Skor: ${nilaiAkhir}. Seperti barisan Pembela Tanah Air (PETA), kalian sudah berlatih keras. Persiapan yang bagus, namun taktik kalian masih harus lebih tajam!`,
+                icon: 'warning',
+                color: '#f39c12',
+                background: '#fdebd0'
+            };
+        } else if (nilaiAkhir >= 81 && nilaiAkhir <= 90) {
+            status = "Tercapai";
+            temaAnimasi = {
+                title: 'Sidang BPUPKI Sukses!',
+                text: `Skor: ${nilaiAkhir}. Ide-ide brilian kelompok kalian tersusun rapi bagaikan panitia persiapan kemerdekaan. Kinerja yang sangat membanggakan!`,
+                icon: 'info',
+                color: '#3498db',
+                background: '#d6eaf8'
+            };
+        } else if (nilaiAkhir >= 91 && nilaiAkhir <= 100) {
+            status = "Sangat Tercapai";
+            temaAnimasi = {
+                title: 'MERDEKA!!',
+                text: `Skor: ${nilaiAkhir}. Kemenangan yang gilang gemilang! Proklamasi berkumandang berkat kerjasama dan dedikasi kelompok kalian yang luar biasa sempurna!`,
+                icon: 'success',
+                color: '#27ae60',
+                background: '#d5f5e3'
+            };
+        }
+
+        // Tampilkan Popup Animasi Interaktif
+        Swal.fire({
+            title: temaAnimasi.title,
+            text: temaAnimasi.text,
+            icon: temaAnimasi.icon,
+            color: temaAnimasi.color,
+            background: temaAnimasi.background,
+            confirmButtonText: 'Simpan ke Database',
+            showCancelButton: true,
+            cancelButtonText: 'Batal',
+            backdrop: `rgba(0,0,0,0.8)`
+        }).then((result) => {
+            if (result.isConfirmed) {
+                kirimKeSpreadsheet(groupId, nilaiAkhir, rataRataAnggota, status);
+            }
+        });
+    }
+
+    function kirimKeSpreadsheet(groupId, nilaiAkhir, rataRataAnggota, status) {
+        // Jangan lupa masukkan URL Web App Google Script di atas
+        if(SCRIPT_URL === "URL_GOOGLE_APPS_SCRIPT_ANDA_DISINI") {
+            Swal.fire('Error', 'Silakan masukkan URL Google Apps Script Anda terlebih dahulu di dalam kode (variabel SCRIPT_URL).', 'error');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Menyimpan Data...',
+            text: 'Membawa pesan sejarah ke database',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading()
+            }
+        });
+
+        const dataKirim = {
+            kelas: globalConfig.kelas,
+            jurusan: globalConfig.jurusan,
+            kelompok: `Kelompok ${groupId}`,
+            rataRataAnggota: rataRataAnggota,
+            nilaiAkhir: nilaiAkhir,
+            predikat: status
+        };
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(dataKirim)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === 'success') {
+                Swal.fire('Berhasil!', 'Catatan sejarah kelompok telah diabadikan di Spreadsheet.', 'success');
+                // Menonaktifkan tombol agar tidak dikirim 2 kali
+                document.querySelector(`#group-${groupId} .btn-submit-nilai`).disabled = true;
+                document.querySelector(`#group-${groupId} .btn-submit-nilai`).innerText = "Sudah Tersimpan";
+                document.querySelector(`#group-${groupId} .btn-submit-nilai`).style.backgroundColor = "#7f8c8d";
+            }
+        })
+        .catch(error => {
+            Swal.fire('Gagal Menyimpan', 'Terjadi kesalahan jaringan.', 'error');
+        });
+    }
+</script>
 
 </body>
 </html>
