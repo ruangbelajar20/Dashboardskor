@@ -297,7 +297,7 @@
             
             for (let j = 1; j <= globalConfig.jmlAnggota; j++) {
                 groupHTML += `<div class="member-card">
-                                <h4>👤 Siswa Ke-${j}</h4>
+                                <h4>👤 Anggota Ke-${j}</h4>
                                 <div class="aspect-grid">`;
                 
                 for (let k = 1; k <= globalConfig.jmlAspek; k++) {
@@ -361,7 +361,7 @@
 
             // Math.round digunakan agar nilai membulat jadi bilangan genap tanpa nol koma
             let rataRataMemberIni = Math.round(totalNilaiMemberIni / globalConfig.jmlAspek);
-            detailAnggotaArray.push(`Siswa ${j}: ${rataRataMemberIni}`);
+            detailAnggotaArray.push(`Anggota ${j}: ${rataRataMemberIni}`);
         }
 
         if (nilaiMasuk < totalInput) {
