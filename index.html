@@ -113,6 +113,19 @@
             font-size: 0.85rem;
             margin-top: 0;
         }
+        /* Efek ketika tombol sedang ditahan/diklik */
+        .btn-kembali:active {
+            transform: scale(0.90);
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        /* Efek warna baru setelah diklik (Merah/Oranye) */
+        .btn-kembali.diklik {
+            background: linear-gradient(45deg, #e74c3c, #c0392b) !important;
+            color: white;
+            transform: scale(0.95);
+            transition: all 0.2s ease;
+        }
 
         .btn-submit-nilai { background: linear-gradient(45deg, #27ae60, #2ecc71); margin-top: 15px; }
 
@@ -230,7 +243,7 @@
 <div class="container animate__animated" id="grading-screen">
     <div class="header-grading" style="display: flex; justify-content: space-between; align-items: center;">
         <h2 id="judul-grading">Penilaian</h2>
-        <button class="btn-kembali" onclick="location.reload()">Kembali</button>
+        <button class="btn-kembali" onclick="kembaliKeSetup(this)">Kembali</button>
     </div>
     
     <div class="group-tabs" id="tabs-container"></div>
@@ -444,6 +457,18 @@
             }
         }).catch(error => { Swal.fire('Gagal', 'Periksa internet Anda.', 'error'); });
     }
+    function kembaliKeSetup(tombol) {
+    // 1. Ubah teks tombol
+    tombol.innerText = "Memuat ulang...";
+
+    // 2. Tambahkan class CSS 'diklik' untuk merubah warnanya
+    tombol.classList.add("diklik");
+
+    // 3. Beri jeda 0.3 detik (300 milidetik) agar animasi terlihat, lalu reload
+    setTimeout(() => {
+        location.reload();
+    }, 300);
+}
 </script>
 
 </body>
